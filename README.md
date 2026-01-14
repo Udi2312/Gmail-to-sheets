@@ -1,3 +1,10 @@
+## Author
+
+**Udit Bansal**  
+B.Tech IT (3rd Year)  
+This project was designed and implemented as part of an internship assignment to demonstrate practical API integration, OAuth handling, and automation using Python.
+
+
 # Gmail to Sheets Automation
 
 A production-grade Python automation system that reads unread emails from Gmail and appends them to a Google Sheet with duplicate prevention.
@@ -84,15 +91,15 @@ gmail-to-sheets/
 Edit `config.py`:
 
 ```python
-SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE"  # Paste your sheet ID
-SHEET_NAME = "Emails"  # Change if you used a different sheet name
+SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE"  
+SHEET_NAME = "Emails"  
 ```
 
 ### Step 4: Install Dependencies
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  
 pip install -r requirements.txt
 ```
 
@@ -114,6 +121,12 @@ python -m src.main
 3. **Token Caching**: Token stored locally in `credentials/token.pickle`
 4. **Token Refresh**: Automatically refreshes token when expired using refresh token
 5. **No Service Account**: Uses user-delegated permissions (safer than service accounts)
+
+## Design Decisions
+
+- Chose a JSON-based state file instead of a database to keep the solution simple and easy to audit.
+- Used OAuth 2.0 instead of service accounts to follow Gmail security best practices.
+- Split the code into multiple services to keep Gmail logic, Sheets logic, and parsing logic separate and readable.
 
 ### Duplicate Prevention Strategy
 
@@ -139,7 +152,7 @@ The system uses a **persistent state file** (`state/processed_emails.json`) to t
 
 3. **Why This Approach**:
    - **Reliable**: Works offline and survives API failures
-   - **Fast**: O(1) lookup time using set data structure
+   - **Fast**: Uses a set internally, so duplicate checks are very quick
    - **Simple**: No database required
    - **Auditable**: Human-readable JSON format
    - **Recoverable**: Previous runs can be reconstructed from state file
@@ -164,24 +177,14 @@ Save Email ID to State File
 Complete
 ```
 
-## Challenge: Rate Limiting & Recovery
+## Challenge Faced During Development
 
-**Challenge:** Gmail and Google Sheets APIs have rate limits. If the script processes many emails, it might hit rate limits and fail mid-way, leaving some emails unprocessed and others marked as read but not in the sheet.
+One challenge I faced while building this project was handling API failures and partial execution. 
+For example, if the Gmail API succeeds but the Google Sheets API fails due to rate limits, it could lead to inconsistent data.
 
-**Solution Implemented:**
+To solve this, I implemented a retry mechanism and ensured that an email is marked as processed only after it is successfully appended to the Google Sheet. 
+This way, the script can safely resume processing without data loss or duplication.
 
-1. **Retry Logic**: Each API call includes exponential backoff with configurable retry attempts
-   ```python
-   MAX_RETRIES = 3
-   RETRY_DELAY = 2  # seconds
-   ```
-
-2. **State-Driven Recovery**: Since we save state only after successful sheet append:
-   - If sheet append fails: Email remains unread and not in processed set
-   - Next run will retry the same email
-   - No data loss or duplication
-
-3. **Logging**: All operations logged with timestamps for debugging
 
 ## Features
 
@@ -204,6 +207,8 @@ Complete
 5. **No Scheduling**: Manual runs only (can be combined with cron or task scheduler)
 6. **Gmail API Limits**: 10,000 requests/minute per user
 7. **OAuth Expiry**: Refresh tokens expire after 6 months of inactivity
+
+This project can be further improved with scheduling and better attachment handling, which I plan to explore as a future enhancement.
 
 ## Optional Enhancements
 
