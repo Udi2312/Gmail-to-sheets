@@ -1,4 +1,4 @@
-# Python
+
 __pycache__/
 *.py[cod]
 .Python
@@ -6,15 +6,12 @@ venv/
 env/
 ENV/
 
-# Gmail to Sheets - Sensitive
 credentials/
 state/
 logs/
 
-# Environment variables
 .env*
 
-# IDE
 .vscode/
 .idea/
 *.swp

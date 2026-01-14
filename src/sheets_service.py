@@ -1,17 +1,12 @@
-"""
-Google Sheets API service module.
-Handles authentication and appending rows to a Google Sheet.
-"""
-
 import os
+import logging
+import time
+import pickle
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.api_core.exceptions import GoogleAPIError
 import googleapiclient.discovery
-import logging
-import time
-import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -21,22 +16,17 @@ CREDENTIALS_FILE = "credentials/credentials.json"
 
 
 class SheetsService:
-    """Handles Google Sheets API operations."""
-
     def __init__(self):
         self.service = None
         self._authenticate()
 
     def _authenticate(self):
-        """Authenticate with Google Sheets API using OAuth 2.0."""
         creds = None
 
-        # Load existing token if available
         if os.path.exists(TOKEN_FILE):
             with open(TOKEN_FILE, "rb") as token:
                 creds = pickle.load(token)
 
-        # Refresh or create new credentials
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         elif not creds or not creds.valid:
@@ -45,7 +35,6 @@ class SheetsService:
             )
             creds = flow.run_local_server(port=0)
 
-        # Save credentials for future runs
         with open(TOKEN_FILE, "wb") as token:
             pickle.dump(creds, token)
 
@@ -55,19 +44,6 @@ class SheetsService:
         logger.info("Google Sheets authentication successful")
 
     def append_email_row(self, spreadsheet_id, sheet_name, values, max_retries=3, retry_delay=2):
-        """
-        Append a row to the Google Sheet.
-
-        Args:
-            spreadsheet_id: ID of the target spreadsheet
-            sheet_name: Name of the sheet tab
-            values: List of values to append [from, subject, date, content]
-            max_retries: Number of times to retry on failure
-            retry_delay: Delay in seconds between retries
-
-        Returns:
-            True if successful, False otherwise
-        """
         body = {"values": [values]}
         range_name = f"{sheet_name}!A:D"
 
@@ -79,7 +55,7 @@ class SheetsService:
                     valueInputOption="RAW",
                     body=body,
                 ).execute()
-                logger.info(f"Successfully appended row to sheet")
+                logger.info("Successfully appended row to sheet")
                 return True
             except GoogleAPIError as e:
                 logger.error(f"API error on attempt {attempt + 1}: {e}")
